@@ -4,47 +4,21 @@ const http = require("http")
 
 const url = require("url")
 
-////////////////////////////////////////////
-//file
-
-// fs.readFile("./txt/start.txt", "utf-8", (err, data) => {
-//   fs.readFile(`./txt/${data}.txt`, "utf-8", (err, data1) => {
-//     fs.readFile("./txt/append.txt", "utf-8", (err, data2) => {
-//       // console.log(data2)
-
-//       fs.writeFile(
-//         "./txt/tt.txt",
-//         `${data1}\n${data}\n${data1}`,
-//         "utf-8",
-//         (err) => {
-//           console.log("file is done")
-//         }
-//       )
-//     })
-//   })
-// })
-
-/////////////////////////////////////////
-//SERVER
-
 const replaceTemplate = (temp, product) => {
   let output = temp.replace(/{%PRODUCTNAME%}/g, product.productName)
-
-  output = temp.replace(/{%IMAGE%}/g, product.image)
-  output = temp.replace(/{%PRICE%}/g, product.price)
-  output = temp.replace(/{%FROM%}/g, product.from)
-  output = temp.replace(/{%NUTRIENTS%}/g, product.nutrients)
-  output = temp.replace(/{%ID%}/g, product.id)
-  output = temp.replace(/{%DESCRIPTION%}/g, product.description)
-  output = temp.replace(/{%QUNATITY%}/g, product.quantity)
+  output = output.replace(/{%IMAGE%}/g, product.image)
+  output = output.replace(/{%PRICE%}/g, product.price)
+  output = output.replace(/{%FROM%}/g, product.from)
+  output = output.replace(/{%NUTRIENTS%}/g, product.nutrients)
+  output = output.replace(/{%ID%}/g, product.id)
+  output = output.replace(/{%DESCRIPTION%}/g, product.description)
+  output = output.replace(/{%QUANTITY%}/g, product.quantity)
 
   if (!product.organic)
-    output = temp.replace(/{%NOT_Organic%}/g, "not - organic")
+    output = output.replace(/{%NOT_ORGANIC%}/g, "not-organic")
 
   return output
 }
-
-const data = fs.readFileSync(`${__dirname}/dev-data/data.json`, "utf-8")
 
 const templateOverview = fs.readFileSync(
   `${__dirname}/templates/template-overview.html`,
@@ -60,28 +34,38 @@ const templateProduct = fs.readFileSync(
   "utf-8"
 )
 
+const data = fs.readFileSync(`${__dirname}/dev-data/data.json`, "utf-8")
+
 const dataObj = JSON.parse(data)
 
 const server = http.createServer((req, res) => {
-  const pathName = req.url
-  if (pathName === "/" || pathName === "/overview") {
+  const { pathname, searchParams } = new URL(req.url, "http://127.0.0.1:7700")
+  const query = Object.fromEntries(searchParams)
+
+  if (pathname === "/" || pathname === "/overview") {
     res.writeHead(200, { "Content-type": "text/html" })
 
-    const cardsHTML = dataObj.map((el) => replaceTemplate(templateCard, el))
+    const cardsHTML = dataObj
+      .map((el) => replaceTemplate(templateCard, el))
+      .join("")
 
-    res.end(templateOverview)
+    const output = templateOverview.replace("{%PRODUCT_CARDS%}", cardsHTML)
+
+    res.end(output)
   }
 
   ///////////////////////////////////////////////////
-  else if (pathName === "/api") {
+  else if (pathname === "/api") {
     res.writeHead(200, { "Content-type": "application/json" })
     res.end(data)
   }
 
   ///////////////////////////////////////////////////
-  else if (pathName === "/product") {
+  else if (pathname === "/product") {
     res.writeHead(200, { "Content-type": "text/html" })
-    res.end(templateProduct)
+    const product = dataObj[query.id]
+    const output = replaceTemplate(templateProduct, product)
+    res.end(output)
   }
 
   ///////////////////////////////////////////////////
