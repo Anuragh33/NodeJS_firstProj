@@ -1,7 +1,7 @@
 const fs = require("fs")
 const http = require("http")
 const url = require("url")
-
+const slugify = require("slugify")
 const replaceTemplate = require("./modules/replaceTemplate")
 
 const templateOverview = fs.readFileSync(
@@ -47,6 +47,7 @@ const server = http.createServer((req, res) => {
   ///////////////////////////////////////////////////
   else if (pathname === "/product") {
     res.writeHead(200, { "Content-type": "text/html" })
+
     const product = dataObj[query.id]
     const output = replaceTemplate(templateProduct, product)
     res.end(output)
