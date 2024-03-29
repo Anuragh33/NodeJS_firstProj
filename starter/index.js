@@ -63,3 +63,5 @@ const server = http.createServer((req, res) => {
 server.listen(7700, "127.0.0.1", () => {
   console.log("listeniing to the request on the port 7700 ")
 })
+
+console.log(typeof +null)
